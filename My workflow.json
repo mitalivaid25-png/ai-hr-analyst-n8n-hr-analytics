@@ -1,0 +1,200 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "INBOX"
+          ],
+          "q": "subject: KPI REQUEST "
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "id": "86162510-cc59-4b68-be80-c92d37eb00e7",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2D2nYwp10vgAajta",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=From: {{ $json.from.text }}\nSubject: {{ $json.subject }}\nEmail body:\n{{ $json.text }}",
+        "options": {
+          "systemMessage": "You handle KPI requests that arrive by email. Use the Google Sheets tool to look up the KPI data the sender asks for, then write a clear, concise plain-text email reply with the figures. If the request is unclear or empty, reply briefly with the available KPIs and ask which ones they need."
+        }
+      },
+      "id": "fb68c57d-ba49-4279-bf9f-de7d4bbb5b1b",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5",
+          "cachedResultName": "Claude Sonnet 5"
+        },
+        "options": {}
+      },
+      "id": "9e850b31-54a2-437a-a3ae-c962d17a1bdd",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        96,
+        208
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1Hqkfk9NoHQglZmtAAHu41mtC5oYVpVI4zQghRPxUuzM/edit?pli=1&gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Hqkfk9NoHQglZmtAAHu41mtC5oYVpVI4zQghRPxUuzM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "6dca9877-1739-46af-96bf-f57b1f82a145",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        384,
+        208
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ywZtuFZZiR9xROUw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "emailType": "text",
+        "message": "={{$json.output}}",
+        "options": {
+          "replyToSenderOnly": true
+        }
+      },
+      "id": "ae95a29a-2293-455c-8d7c-0e75f9bb2905",
+      "name": "Reply to a message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        592,
+        0
+      ],
+      "webhookId": "9288016d-24c9-488d-82e1-40bbcbf9c7c9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2D2nYwp10vgAajta",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ecdf735b-8c5e-4c74-b0fa-9d0ca930070f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "435bbaa5701012c8f9c9584a2bed0d3a6a2336c8c11db3567fa1284bfa909730"
+  },
+  "nodeGroups": [],
+  "id": "Kfw2ItybmQ2Xs3rD",
+  "tags": []
+}
